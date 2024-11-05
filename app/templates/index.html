@@ -641,21 +641,17 @@
   // Load entity into form
   async function loadEntity(id) {
     try {
-      const response = await fetch(`/api/entity/${id}`);
-      const data = await response.json();
+      // Get the YAML data from the API
+      const yamlResponse = await fetch(`/api/entity/${id}/download`);
+      const data = await yamlResponse.json();
       
-      if (!response.ok) {
+      if (!data.status === 'success') {
         showStatus(StatusType.ERROR, "Failed to load entity", data.message);
         return;
       }
 
-      // Get the YAML data from the API
-      const yamlResponse = await fetch(`/api/entity/${id}/download`);
-      const yamlText = await yamlResponse.text();
-      const entityData = yaml.load(yamlText);
-      
       // Populate the form with the entity data
-      populateForm(entityData);
+      populateForm(data.data);
       showStatus(StatusType.SUCCESS, "Entity loaded into form");
       
       // Scroll to top of form
