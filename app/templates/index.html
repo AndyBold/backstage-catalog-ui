@@ -1,0 +1,642 @@
+{% extends "base.html" %} {% block content %}
+<div class="bg-white shadow rounded-lg p-6">
+  <!-- Status Messages Container -->
+  <div id="statusMessages" class="mb-4"></div>
+
+  <div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-medium">Create New Entity</h2>
+      <button
+        onclick="showUploadModal()"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+      >
+        Upload Existing Entity
+      </button>
+    </div>
+
+    <!-- Main Form -->
+    <form id="entityForm" class="space-y-6">
+      <!-- API Version and Kind -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700"
+            >{{ fields.apiVersion.label }}</label
+          >
+          <input
+            type="text"
+            name="apiVersion"
+            value="{{ fields.apiVersion.default }}"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700"
+            >{{ fields.kind.label }}</label
+          >
+          <select
+            name="kind"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+            {% for option in fields.kind.options %}
+            <option value="{{ option }}">{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="space-y-4">
+        <h3 class="text-md font-medium">Metadata</h3>
+        {% for key, field in fields.metadata.items() %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            {{ field.label }} {% if field.required %}
+            <span class="text-red-500">*</span>
+            {% endif %}
+          </label>
+          {% if field.type == 'textarea' %}
+          <textarea
+            name="metadata.{{ key }}"
+            rows="3"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            {%
+            if
+            field.required
+            %}required{%
+            endif
+            %}
+          ></textarea>
+          {% elif field.type == 'key-value' %}
+          <div id="metadata.{{ key }}" class="key-value-container">
+            <div class="flex space-x-2 mb-2">
+              <input
+                type="text"
+                placeholder="Key"
+                class="key-input w-1/2 border border-gray-300 rounded-md"
+              />
+              <input
+                type="text"
+                placeholder="Value"
+                class="value-input w-1/2 border border-gray-300 rounded-md"
+              />
+              <button
+                type="button"
+                onclick="addKeyValuePair('metadata.{{ key }}')"
+                class="bg-blue-600 text-white px-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          {% elif field.type == 'array' %}
+          <div id="metadata.{{ key }}" class="array-container">
+            <div class="flex space-x-2 mb-2">
+              <input
+                type="text"
+                placeholder="Value"
+                class="array-input w-full border border-gray-300 rounded-md"
+              />
+              <button
+                type="button"
+                onclick="addArrayItem('metadata.{{ key }}')"
+                class="bg-blue-600 text-white px-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          {% else %}
+          <input
+            type="{{ field.type }}"
+            name="metadata.{{ key }}"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            {%
+            if
+            field.required
+            %}required{%
+            endif
+            %}
+          />
+          {% endif %} {% if field.help %}
+          <p class="mt-1 text-sm text-gray-500">{{ field.help }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Spec -->
+      <div class="space-y-4">
+        <h3 class="text-md font-medium">Spec</h3>
+        {% for key, field in fields.spec.items() %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            {{ field.label }} {% if field.required %}
+            <span class="text-red-500">*</span>
+            {% endif %}
+          </label>
+          {% if field.type == 'select' %}
+          <select
+            name="spec.{{ key }}"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            {%
+            if
+            field.required
+            %}required{%
+            endif
+            %}
+          >
+            {% for option in field.options %}
+            <option value="{{ option }}">{{ option }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input
+            type="{{ field.type }}"
+            name="spec.{{ key }}"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            {%
+            if
+            field.required
+            %}required{%
+            endif
+            %}
+          />
+          {% endif %} {% if field.help %}
+          <p class="mt-1 text-sm text-gray-500">{{ field.help }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="flex justify-end space-x-3">
+        <button
+          type="button"
+          onclick="resetForm()"
+          class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+        >
+          Reset
+        </button>
+        <button
+          type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+        >
+          Create Entity
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Upload Modal -->
+  <div
+    id="uploadModal"
+    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+  >
+    <div
+      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+    >
+      <div class="mt-3 text-center">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">
+          Upload Existing Entity
+        </h3>
+        <div class="mt-2 px-7 py-3">
+          <input type="file" id="yamlFile" accept=".yaml,.yml" class="w-full" />
+        </div>
+        <div class="items-center px-4 py-3">
+          <button
+            id="uploadButton"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md w-full hover:bg-blue-700 transition-colors"
+          >
+            Upload
+          </button>
+          <button
+            onclick="hideUploadModal()"
+            class="mt-3 px-4 py-2 bg-gray-200 text-black rounded-md w-full hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Existing Entities -->
+  <div class="mt-8">
+    <h2 class="text-lg font-medium mb-4">Existing Entities</h2>
+    <div id="entityList" class="space-y-4">
+      <!-- Entities will be listed here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // Status message handling
+  const StatusType = {
+    SUCCESS: "success",
+    ERROR: "error",
+    WARNING: "warning",
+    INFO: "info",
+  };
+
+  function showStatus(type, message, details = null) {
+    const statusContainer = document.getElementById("statusMessages");
+    const statusDiv = document.createElement("div");
+
+    const colors = {
+      [StatusType.SUCCESS]: "bg-green-50 border-green-400 text-green-700",
+      [StatusType.ERROR]: "bg-red-50 border-red-400 text-red-700",
+      [StatusType.WARNING]: "bg-yellow-50 border-yellow-400 text-yellow-700",
+      [StatusType.INFO]: "bg-blue-50 border-blue-400 text-blue-700",
+    };
+
+    statusDiv.className = `border-l-4 p-4 mb-4 ${colors[type]}`;
+
+    const contentHTML = `
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="font-medium">${message}</p>
+                ${details ? `<p class="mt-1 text-sm">${details}</p>` : ""}
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()"
+                    class="ml-4 text-lg font-medium hover:text-opacity-75">&times;</button>
+        </div>
+    `;
+
+    statusDiv.innerHTML = contentHTML;
+    statusContainer.appendChild(statusDiv);
+
+    // Auto-remove success messages after 5 seconds
+    if (type === StatusType.SUCCESS) {
+      setTimeout(() => statusDiv.remove(), 5000);
+    }
+  }
+
+  function clearStatus() {
+    document.getElementById("statusMessages").innerHTML = "";
+  }
+
+  // Form handling
+  async function submitEntity(formData) {
+    try {
+      clearStatus();
+
+      const response = await fetch("/api/entity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showStatus(
+          StatusType.ERROR,
+          data.message,
+          data.errors ? data.errors.join("\n") : data.details,
+        );
+        return false;
+      }
+
+      showStatus(StatusType.SUCCESS, "Entity created successfully");
+      await loadEntities();
+      resetForm();
+      return true;
+    } catch (error) {
+      showStatus(StatusType.ERROR, "Network error", error.message);
+      return false;
+    }
+  }
+
+  // Form event handlers
+  document
+    .getElementById("entityForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const entityData = {
+        apiVersion: formData.get("apiVersion"),
+        kind: formData.get("kind"),
+        metadata: {},
+        spec: {},
+      };
+
+      // Process form fields
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith("metadata.")) {
+          entityData.metadata[key.split(".")[1]] = value;
+        } else if (key.startsWith("spec.")) {
+          entityData.spec[key.split(".")[1]] = value;
+        }
+      }
+
+      // Add labels and tags
+      const labelsContainer = document.getElementById("metadata.labels");
+      entityData.metadata.labels = getKeyValuePairs(labelsContainer);
+
+      const tagsContainer = document.getElementById("metadata.tags");
+      entityData.metadata.tags = getArrayItems(tagsContainer);
+
+      await submitEntity(entityData);
+    });
+
+  // File upload handling
+  document
+    .getElementById("uploadButton")
+    .addEventListener("click", async () => {
+      const fileInput = document.getElementById("yamlFile");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        showStatus(StatusType.ERROR, "Please select a file");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          populateForm(result.data);
+          hideUploadModal();
+          showStatus(StatusType.SUCCESS, "File uploaded successfully");
+        } else {
+          showStatus(
+            StatusType.ERROR,
+            result.message,
+            result.errors ? result.errors.join("\n") : result.details,
+          );
+        }
+      } catch (error) {
+        showStatus(StatusType.ERROR, "Upload failed", error.message);
+      }
+    });
+
+  // Entity list management
+  async function loadEntities() {
+    try {
+      const response = await fetch("/api/entity");
+      const data = await response.json();
+
+      if (!response.ok) {
+        showStatus(StatusType.ERROR, "Failed to load entities", data.message);
+        return;
+      }
+
+      const entityList = document.getElementById("entityList");
+      entityList.innerHTML = data.entities
+        .map(
+          (entity) => `
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-medium">${entity.kind} / ${entity.name}</h3>
+                        <p class="text-sm text-gray-600">${entity.namespace}</p>
+                    </div>
+                    <div class="space-x-2">
+                        <button onclick="downloadEntity(${entity.id})"
+                                class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                            Download
+                        </button>
+                        <button onclick="deleteEntity(${entity.id})"
+                                class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `,
+        )
+        .join("");
+    } catch (error) {
+      showStatus(StatusType.ERROR, "Failed to load entities", error.message);
+    }
+  }
+
+  async function downloadEntity(id) {
+    try {
+      const response = await fetch(`/api/entity/${id}/download`);
+      if (!response.ok) {
+        const data = await response.json();
+        showStatus(StatusType.ERROR, "Download failed", data.message);
+        return;
+      }
+
+      // Create a download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `entity-${id}.yaml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      showStatus(StatusType.ERROR, "Download failed", error.message);
+    }
+  }
+  async function deleteEntity(id) {
+    if (!confirm("Are you sure you want to delete this entity?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/entity/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        showStatus(StatusType.ERROR, "Delete failed", data.message);
+        return;
+      }
+
+      showStatus(StatusType.SUCCESS, "Entity deleted successfully");
+      await loadEntities();
+    } catch (error) {
+      showStatus(StatusType.ERROR, "Delete failed", error.message);
+    }
+  }
+
+  // Form utility functions
+  function resetForm() {
+    const form = document.getElementById("entityForm");
+    form.reset();
+
+    // Clear dynamic fields
+    clearKeyValueContainers();
+    clearArrayContainers();
+
+    // Reset to default values where applicable
+    const apiVersionInput = form.querySelector('[name="apiVersion"]');
+    if (apiVersionInput) {
+      apiVersionInput.value = "{{ fields.apiVersion.default }}";
+    }
+
+    showStatus(StatusType.INFO, "Form reset to defaults");
+  }
+
+  function clearKeyValueContainers() {
+    document.querySelectorAll(".key-value-container").forEach((container) => {
+      const pairs = container.querySelectorAll(".key-value-pair");
+      pairs.forEach((pair) => {
+        if (pair !== container.firstElementChild) {
+          pair.remove();
+        }
+      });
+
+      // Clear inputs in the first pair
+      const firstPair = container.querySelector(".key-value-pair");
+      if (firstPair) {
+        firstPair.querySelector(".key-input").value = "";
+        firstPair.querySelector(".value-input").value = "";
+      }
+    });
+  }
+
+  function clearArrayContainers() {
+    document.querySelectorAll(".array-container").forEach((container) => {
+      const items = container.querySelectorAll(".array-item");
+      items.forEach((item) => {
+        if (item !== container.firstElementChild) {
+          item.remove();
+        }
+      });
+
+      // Clear input in the first item
+      const firstItem = container.querySelector(".array-item");
+      if (firstItem) {
+        firstItem.querySelector(".array-input").value = "";
+      }
+    });
+  }
+
+  // Key-value pair handling
+  function addKeyValuePair(containerId, key = "", value = "") {
+    const container = document.getElementById(containerId);
+    const div = document.createElement("div");
+    div.className = "flex space-x-2 mb-2 key-value-pair";
+    div.innerHTML = `
+            <input type="text"
+                   value="${key}"
+                   placeholder="Key"
+                   class="key-input w-1/2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <input type="text"
+                   value="${value}"
+                   placeholder="Value"
+                   class="value-input w-1/2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <button type="button"
+                    onclick="this.parentElement.remove()"
+                    class="bg-red-600 text-white px-2 rounded hover:bg-red-700 transition-colors">-</button>
+        `;
+    container.appendChild(div);
+  }
+
+  function getKeyValuePairs(container) {
+    const pairs = {};
+    container.querySelectorAll(".key-value-pair").forEach((pair) => {
+      const key = pair.querySelector(".key-input").value.trim();
+      const value = pair.querySelector(".value-input").value.trim();
+      if (key && value) {
+        pairs[key] = value;
+      }
+    });
+    return pairs;
+  }
+
+  // Array item handling
+  function addArrayItem(containerId, value = "") {
+    const container = document.getElementById(containerId);
+    const div = document.createElement("div");
+    div.className = "flex space-x-2 mb-2 array-item";
+    div.innerHTML = `
+            <input type="text"
+                   value="${value}"
+                   placeholder="Value"
+                   class="array-input w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <button type="button"
+                    onclick="this.parentElement.remove()"
+                    class="bg-red-600 text-white px-2 rounded hover:bg-red-700 transition-colors">-</button>
+        `;
+    container.appendChild(div);
+  }
+
+  function getArrayItems(container) {
+    const items = [];
+    container.querySelectorAll(".array-item").forEach((item) => {
+      const value = item.querySelector(".array-input").value.trim();
+      if (value) {
+        items.push(value);
+      }
+    });
+    return items;
+  }
+
+  // Modal handling
+  function showUploadModal() {
+    document.getElementById("uploadModal").classList.remove("hidden");
+  }
+
+  function hideUploadModal() {
+    document.getElementById("uploadModal").classList.add("hidden");
+    document.getElementById("yamlFile").value = "";
+  }
+
+  // Form population from uploaded YAML
+  function populateForm(data) {
+    const form = document.getElementById("entityForm");
+
+    // Reset form before populating
+    resetForm();
+
+    // Set simple fields
+    form.querySelector('[name="apiVersion"]').value = data.apiVersion;
+    form.querySelector('[name="kind"]').value = data.kind;
+
+    // Set metadata fields
+    Object.entries(data.metadata).forEach(([key, value]) => {
+      const field = form.querySelector(`[name="metadata.${key}"]`);
+      if (field) {
+        if (key === "labels") {
+          const container = document.getElementById("metadata.labels");
+          Object.entries(value).forEach(([k, v]) => {
+            addKeyValuePair("metadata.labels", k, v);
+          });
+        } else if (key === "tags") {
+          const container = document.getElementById("metadata.tags");
+          value.forEach((tag) => {
+            addArrayItem("metadata.tags", tag);
+          });
+        } else {
+          field.value = value;
+        }
+      }
+    });
+
+    // Set spec fields
+    Object.entries(data.spec).forEach(([key, value]) => {
+      const field = form.querySelector(`[name="spec.${key}"]`);
+      if (field) {
+        field.value = value;
+      }
+    });
+
+    showStatus(StatusType.SUCCESS, "Form populated from uploaded file");
+  }
+
+  // Initialize the page
+  document.addEventListener("DOMContentLoaded", () => {
+    loadEntities();
+  });
+</script>
+{% endblock %}

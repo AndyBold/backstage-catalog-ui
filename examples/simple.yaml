@@ -1,0 +1,17 @@
+# This is a very simple example from https://backstage.io/docs/features/software-catalog/references
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: petstore
+  namespace: external-systems
+  description: Petstore
+  owner: Squad Honey Bear
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:pet-managers
+  system: pet-platform
+  providesApis:
+    - petstore
+    - internal/streetlights
+    - hello-world
