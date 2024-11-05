@@ -133,8 +133,8 @@ class DatabaseManager:
         Base.metadata.drop_all(self._engine)
 
 
-# Create database manager instance
-db_manager = DatabaseManager()
-
 # Create Flask-SQLAlchemy instance for compatibility
 db = SQLAlchemy(model_class=Base)
+
+# Create database manager instance
+db_manager = DatabaseManager()

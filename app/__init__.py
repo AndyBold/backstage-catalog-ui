@@ -34,8 +34,9 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info("Catalog Manager startup")
 
-    # Initialize database
+    # Initialize databases
     db.init_app(app)
+    db_manager.init_app(app)
 
     # Register blueprints
     from app.routes import bp
