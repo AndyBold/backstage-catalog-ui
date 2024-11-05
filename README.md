@@ -19,6 +19,45 @@ Maybe. Some caveats.
 - It's probably buggy.
 - It probably doesn't fit your own use case.
 - You will need to figure out how to run this and best use it in your own context.
+- I have only tested this on macOS. It *should* work anywhere that Python works, but YMMV.
+
+## Running it.
+- Create a Python virtualenv. I used Python 3.13.
+
+``` shell
+cd ~/my/venv/place
+python3 -m venv catalog-ui
+cd catalog-ui
+source bin/activate  # Obvs, on Windows, use Activate.ps1, unless you have blessed yourself with WSL
+```
+
+- Install the requirements
+
+``` shell
+pip install -r requirements.txt
+```
+
+- Run it.
+
+``` shell
+python ./run.py
+```
+
+- The service runs on localhost port 8001 by default, but you can change that.
+
+``` shell
+python ./run.py --help
+
+usage: run.py [-h] [--host HOST] [--port PORT] [--debug]
+
+Run the Catalog Manager application
+
+options:
+  -h, --help   show this help message and exit
+  --host HOST  Host to run the application on
+  --port PORT  Port to run the application on
+  --debug      Run in debug mode
+```
 
 
 ## What's next?
