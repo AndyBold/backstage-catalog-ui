@@ -403,6 +403,10 @@
                         <p class="text-sm text-gray-600">${entity.namespace}</p>
                     </div>
                     <div class="space-x-2">
+                        <button onclick="loadEntity(${entity.id})"
+                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                            Load
+                        </button>
                         <button onclick="downloadEntity(${entity.id})"
                                 class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
                             Download
@@ -632,6 +636,33 @@
     });
 
     showStatus(StatusType.SUCCESS, "Form populated from uploaded file");
+  }
+
+  // Load entity into form
+  async function loadEntity(id) {
+    try {
+      const response = await fetch(`/api/entity/${id}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        showStatus(StatusType.ERROR, "Failed to load entity", data.message);
+        return;
+      }
+
+      // Get the YAML data from the API
+      const yamlResponse = await fetch(`/api/entity/${id}/download`);
+      const yamlText = await yamlResponse.text();
+      const entityData = yaml.load(yamlText);
+      
+      // Populate the form with the entity data
+      populateForm(entityData);
+      showStatus(StatusType.SUCCESS, "Entity loaded into form");
+      
+      // Scroll to top of form
+      document.getElementById("entityForm").scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+      showStatus(StatusType.ERROR, "Failed to load entity", error.message);
+    }
   }
 
   // Initialize the page
