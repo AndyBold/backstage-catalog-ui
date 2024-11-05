@@ -282,12 +282,12 @@ def download_entity(entity_id: int):
                     'message': 'Entity not found'
                 }), 404
                 
-            return send_file(
-                io.BytesIO(entity.entity_data.encode()),
-                mimetype='application/x-yaml',
-                as_attachment=True,
-                download_name=f"{entity.unique_name}.yaml"
-            )
+            # Parse the YAML data before sending
+            yaml_data = yaml.safe_load(entity.entity_data)
+            return jsonify({
+                'status': 'success',
+                'data': yaml_data
+            }), 200
             
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in download_entity: {str(e)}")
