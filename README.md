@@ -6,6 +6,8 @@ This is a Python Flask Application that presents a simple UI for creating a soft
 
 It is a proof-of-concept to understand what might be possible to assist development teams with bootstrapping their Software Catalogs.
 
+![A screenshot of the application.](docs/images/screenshot.png "Screenshot")
+
 You may:
 - Fill in the blanks, and create a catalog entity. It is saved to a Sqlite database.
 - Existing entities that have been created are listed at the end of the page. When you download one, you get the YAML for the entity, and this *should* work with Backstage. I have not actually tested this, yet...
