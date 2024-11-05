@@ -2,7 +2,7 @@
 
 
 from flask import Flask
-from app.database import db
+from app.database import db, db_manager
 from config import Config
 import logging
 from logging.handlers import RotatingFileHandler
