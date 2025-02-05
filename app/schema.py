@@ -41,6 +41,32 @@ CATALOG_FIELDS = {
             "required": True,
             "help": "Namespace the entity belongs to",
         },
+        "annotations": {
+            "type": "object",
+            "label": "Annotations",
+            "required": False,
+            "help": "Annotations for the entity",
+            "fields": {
+                "backstage.io/source-location": {
+                    "type": "text",
+                    "label": "Source Location",
+                    "required": False,
+                    "help": "URL to the source code repository (e.g., 'url:https://github.com/org/repo')",
+                },
+                "snyk.io/org-id": {
+                    "type": "text",
+                    "label": "Snyk Organization ID",
+                    "required": False,
+                    "help": "The unique project UUID from Snyk organization",
+                },
+                "snyk.io/target": {
+                    "type": "text",
+                    "label": "Snyk Target Path",
+                    "required": False,
+                    "help": "The path to the source code within the repository (e.g., 'packages/my-service')",
+                },
+            },
+        },
         "title": {
             "type": "text",
             "label": "Title",
